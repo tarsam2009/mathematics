@@ -1,2 +1,4 @@
 *.pyc
 graphs/*.pyc
+*~
+graphs/*~
