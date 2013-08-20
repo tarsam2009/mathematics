@@ -1,4 +1,4 @@
-from high_math import lcm
+from mathematics import lcm
 from operator import itemgetter
 
 def residue_sets(moduli):
