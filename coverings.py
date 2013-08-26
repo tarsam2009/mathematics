@@ -102,7 +102,7 @@ class Covering:
 		else:
 			self.congruences.remove( Congruence( residue, modulus ) )
 
-		self.lcm = lcm( filter( lambda x: x.modulus, congruences ) )
+		self.lcm = lcm( filter( lambda x: x.modulus, self.congruences ) )
 
 	def update( self, residue, modulus ):
 		'''Replaces the residue for a given modulus'''
@@ -149,8 +149,8 @@ class Covering:
 
 	def maximum_coverage( self ):
 		'''Returns the sum of the recipricals of the moduli'''
-		return sum( map( lambda x: x.coverage(), self ) )
-
+		return sum( map( lambda x: x.coverage(), self ) )		
+	
 def greedy_covering( moduli, start = 0 ):
 	'''
 	Returns the best covering produced by greedily selecting moduli.
