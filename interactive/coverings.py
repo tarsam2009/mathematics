@@ -11,6 +11,8 @@ class InteractiveCovering:
 		self.residues = residues
 		self.lcm = lcm
 		self.row = 0
+		self.width = 1
+		self.height = 1
 		window = pyglet.window.Window(resizable=True)
 		window.push_handlers( self.on_draw, self.on_resize, self.on_key_press )
 		pyglet.app.run()

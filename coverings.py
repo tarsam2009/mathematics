@@ -1,5 +1,6 @@
 from mathematics import lcm
 from operator import itemgetter
+from collections import deque
 
 def residue_sets(moduli):
 	'''Iterator for all possible residue choices given a list of moduli'''
@@ -150,7 +151,56 @@ class Covering:
 	def maximum_coverage( self ):
 		'''Returns the sum of the recipricals of the moduli'''
 		return sum( map( lambda x: x.coverage(), self ) )		
+
+def top_down_covering( moduli ):
+	'''
+	Attempts a dynamic solution to the covering
+	'''
+	lcm_of_moduli = lcm( moduli )
+	coverage = [0] * lcm_of_moduli
+	residues = {}
+	moduli = sorted( moduli )
 	
+	for modulus in moduli:
+		residues[modulus] = 0
+	
+	for i in xrange(lcm_of_moduli):
+		coverage[i] = deque()
+	
+	for i in xrange( len(moduli) ):
+		for j in xrange(0,lcm_of_moduli, moduli[i]):
+			coverage[j].append(moduli[i])
+	
+	while any(map(lambda x: len(x) == 0, coverage)):
+		index_covering = zip( map(lambda x: len(x), coverage), xrange(len(coverage)) )
+		index_of_least_covered = min( index_covering )[1]
+		index_of_most_covered = max( index_covering )[1]
+		
+		#TODO Intelligently choose next modulus. If it is the only one covering an integer, don't move it. If out of options, quit
+		
+		modulus = coverage[index_of_most_covered].pop()
+		coverage[index_of_most_covered].append(modulus)
+		
+		#print 'Using',modulus, 'at', index_of_largest_covered
+		for j in xrange(residues[modulus], lcm_of_moduli, modulus):
+			coverage[j].pop()
+	
+		residues[modulus] = index_of_least_covered % modulus
+		#print 'Used', zip( map(lambda x: len(x), coverage), xrange(len(coverage)) )
+		print 'Moving {0} from {1} to {2}'.format(modulus, index_of_most_covered, index_of_least_covered)
+		
+		for j in xrange(residues[modulus], lcm_of_moduli, modulus):
+			coverage[j].append(modulus)
+	
+		#for x in coverage:
+		#	print x
+		
+		try:
+			raw_input()
+		except:
+			break
+	return residues
+
 def greedy_covering( moduli, start = 0 ):
 	'''
 	Returns the best covering produced by greedily selecting moduli.
