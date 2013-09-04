@@ -13,3 +13,14 @@ def lcm(a, b=None):
 		return a * b / gcd(a, b)
 	else: #It should be an iterable
 		return reduce( lcm, a )
+
+def fact(n):
+	if n <= 1:
+		return 1
+	ans = long( 1 )
+	return reduce( lambda x,y: x*y, xrange(1,n+1) )
+
+def comb(n,r):
+	n = long(n)
+	r = long(r)
+	return fact( n ) /  ((fact(n-r) * fact(r)))
