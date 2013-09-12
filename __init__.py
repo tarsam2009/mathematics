@@ -21,6 +21,9 @@ def fact(n):
 	return reduce( lambda x,y: x*y, xrange(1,n+1) )
 
 def comb(n,r):
+	if r > n:
+		return 0
+	
 	n = long(n)
 	r = long(r)
 	return fact( n ) /  ((fact(n-r) * fact(r)))
