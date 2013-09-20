@@ -1,20 +1,11 @@
 '''module graph
 
-This module contains methods to find the components of a
-graph and also to visual a graph with Tikz.
-
-The data structure of 'graph' used in this file is as follows:
-   a 'graph' is a dictionary with an entry 'vertexes' and
-      'edges'
-      
-   'graph["vertexes"]' contains a set of the graphs vertices
-   
-   'graph["edges"]' contains a dictionary with entries for
-      each vertex
-   
-   'graph["edges"][v] contains a set where each element in 
-      the set implies the edge v to that element exists in
-      the graph.
+This module contains classes and definitions to explore elements of Graph
+Theory. The most important element of this module is the Graph class. This
+creates a graph stored with an adjacency list, thus allowing quick access,
+but suffering from larger memory requirements. All helper functions
+assume that the graph is provided from this class, which guarantess the
+proper addition and removal of elements to and from the graph.
 '''
 
 import copy
@@ -22,261 +13,127 @@ from collections import deque
 import string
 import math
 
-def disconnectedComponents(graph):
-'''When given a graph, this method looks for the connected
-components of the graph that are disconnected from each other
-and returns the sets in a list.
+#==================
+# CLASS DEFINITIONS
+#==================
+class Graph:
+	'''
+	class Graph
 
-USES: deque
-'''
-    explored = set()
-    clusters = list()
-    
-    #Outer cluster loop
-    for vertex in graph['vertexes']:
-        
-        if vertex in explored:
-            continue
-            
-        queue = deque()
-        queue.append(vertex)
-        
-        cluster = set()
-        cluster.add(vertex)
-        
-        #Find all the vertexes in the cluster
-        while len(queue) > 0:
-            tmpVertex = queue.popleft()
-            for edgeVertex in graph['edges'][tmpVertex]:
-                if edgeVertex not in explored:
-                    explored.add(edgeVertex)
-                    queue.append(edgeVertex)
-                    cluster.add(edgeVertex)
-        
-        clusters.append(cluster)
-    
-    return clusters
+	The Graph class represents a graph as an adjacency list. Vertices
+	and edges can be removed and added to this graph. Manipulations
+	in excess of this require an outside method.
+	'''
+	def __init__( self ):
+		'''Graph.__init__( self )
 
-def toLatexHierarchy(vertexSet,clusterList):
-'''INCOMPLETE
+		Constructs an empty graph. The constuctor only generates
+		empty graphs, but the Graph.load( file ) method allows
+		the loading of a graph from a file.
+		'''
 
-This method was initially created to create a Tikz hierarchy
-in order to visual the clustering. However, it was not
-required for the project and development was cancelled. It
-remains here if further work is done.
-'''
-    height = 0.5
-    width = 1
-    
-    f = open('/home/michael/Documents/Carson-Newman/Honors Project/Images/DataGraphs/Hierarchies/testhierarchy/sporthierarchy', 'w')
-    
-    f.write('''\documentclass{article}
-\usepackage{tikz}
+		#A container for all vertices
+		self.vertices = set()
 
-\usepackage[active,pdftex,tightpage]{preview}
-\PreviewEnvironment{tikzpicture}
-\setlength\PreviewBorder{5pt}
+		#A map of a vertex to all other vertices connected with a directed edge
+		self.edge_map = dict()
 
-\\begin{document}
-\\begin{tikzpicture}[thick]
+		#A map of each edge to its weight
+		self.edges = dict()
+	
+	def add_vertex( self, vertex ):
+		'''Graph.add_vertex( vertex )
 
-\\tikzstyle{every node}=[fill=red!30,rounded corners]
-\\tikzstyle{edge from parent}=[red,thick,draw]
+		Adds a hashable vertex to the graph. The vertex is
+		given no edges.
+		'''
+		if not vertex in self.vertices:
+			self.vertices.add( vertex )
+			self.edge_map[vertex] = set()
+	
+	def remove_vertex( self, vertex ):
+		'''Graph.remove_vertex( vertex )
 
-''')
-    
-    f.write('''\\node {root}\n''' + subHierarchy(vertexSet, clusterList, 1) + ';')
-    
-    f.write('''
-\\end{tikzpicture}
-\\end{document}''')
-    
-    f.close()
+		Removes a vertex from the graph. If the vertex is not
+		in the graph, then no modifications are made. If the
+		vertex is in the graph, then the vertex, as well as
+		all edges connected to the vertex are removed from the
+		graph.
+		'''
+		if vertex in self.vertices:
+			self.vertices.remove( vertex )
+			
+			good_edges = dict()
+			for edge in self.edges:
+				if vertex in edge:
+					self.edge_map[edge[0]].remove(edge[1])
+				else:
+					good_edges[edge] = self.edges[edge]
 
-def subHierarchy(cluster, clusterList, depth):
-'''INCOMPLETE
+			del self.edge_map[vertex]
+			self.edges = good_edges 
 
-For use by the toLatexHierarchy method only
-'''
-    result = ''
-    tab = string.join(['    '] * depth)
-    #print 'Creating sub hierarchy for ', cluster
-    for smallerCluster in clusterList[depth]:
-        #print '\tSubcluster of ', smallerCluster
-        if smallerCluster.issubset(cluster):
-            result += tab + 'child{'
-            if len(smallerCluster) == 1:
-                result += ' node{' + str(smallerCluster) + '}\n' + tab +'}'
-            else:
-                result += ' node{' + str(depth) + '}\n' + subHierarchy(smallerCluster, clusterList, depth + 1) + '\n}'
+	def add_edge( self, vertex_a, vertex_b, weight=1 ):
+		'''Graph.add_edge( a, b, weight )
 
-    return result
-    
-#-----------------------------------------------------------
+		If a and b are in the graph and the edge from a to b, 
+		denoted (a,b), is not already present in the graph, then
+		add (a,b) to the graph. If no edge weight is specified,
+		then the weight is assumed to be 1.
+		'''
+		if not (vertex_a, vertex_b) in self.edges and vertex_a in self.vertices and vertex_b in self.vertices:
+			self.edges[(vertex_a,vertex_b)] = weight
+			self.edge_map[vertex_a].add(vertex_b)
+	
+	def remove_edge( self, edge ):
+		'''Graph.remove_edge( edge )
+		
+		If the edge, represented as a 2-ple is in the graph, then
+		that edge is removed. This method properly removes all
+		references to the edge from all storage places.
+		'''
+		if edge in self.edges:
+			del self.edges[edge]
+			self.edge_map[ edge[0] ].remove( edge[1] )
 
-def toLatexColoredClusters(clusters, graph, colorMap, confName, colorlist):
-'''This method, when given clusters, a graph, a color map,
-a cluster name mape, and a color list produces the figures
-seen in the proof of concept figures in the final paper
+#===================
+# METHOD DEFINITIONS
+#===================
+def disconnected_components(graph):
+	'''disconnected_components( graph )
+	
+	Input: an instance of Graph
+	Output: a list of the disconnected components of the graph
 
-USES: copy, math
-'''
-    result = '''\documentclass{article}
-\usepackage{color}
-\usepackage[usenames,dvipsnames]{xcolor}
-\usepackage{tikz}
+	Uses BFS to determine which segments of the graph are connected.
 
-\usepackage[active,pdftex,tightpage]{preview}
-\PreviewEnvironment{tikzpicture}
-\setlength\PreviewBorder{5pt}
-
-\\begin{document}
-\\newcommand{\circlediam}{2cm}
-\\begin{tikzpicture}[thick]
-\\tikzstyle{every node}=[circle,draw=black,fill=red] {};
-
-'''
-    centerStep = 360 / float(len(clusters))
-    
-    circleDiameter = '2cm'
-    
-    clusterindex = 0
-    
-    for i, cluster in enumerate(clusters):
-        center = (math.cos(math.radians(centerStep * i)) * 12,
-                  math.sin(math.radians(centerStep * i)) * 12)
-        
-        result += '\\begin{scope}' + '[xshift={0:.2f}cm, yshift={1:.2f}cm]'.format(center[0],center[1])
-        
-        size = float(len(cluster))
-        step = 360 / size
-        
-        for j, vert in enumerate(cluster):
-            result += '\t\\node [fill={4}] ({0}) at ({1}:{2}) {3};\n'.format(clusterindex,step * j,circleDiameter, '{}', colorMap[vert])
-            clusterindex += 1
-        
-        result += '\\end{scope}'
-        
-    tmpgraph = copy.deepcopy(graph)
-    vertlist = list(graph['vertexes'])
-    
-    for i in xrange(0,len(vertlist)):
-        for j in tmpgraph['edges'][vertlist[i]]:
-            tmpgraph['edges'][j].remove(vertlist[i])
-            result += '\n\\draw ({0}) -- ({1});'.format(i,
-               vertlist.index(j))
-        
-        
-    prevConf = None
-        
-    for key in confName:
-        name = confName[key]
-        
-        
-        if not prevConf:
-            result += '\n\\node [fill={0}, rectangle] ({1}) {2};'.format(colorlist[key-1], name, '{' + name + '}')
-        else:
-            result += '\n\\node [fill={0}, rectangle] ({1}) [below of={3}]{2};'.format(colorlist[key-1], name, '{' + name + '}', prevConf)
-        
-        prevConf = name
-        
-    result += '\n\n\\end{tikzpicture}\n\\end{document}'
-        
-    return result
-    
-#-----------------------------------------------------------
-
-def toLatexClusters(clusters, graph):
-'''This method, when given a set of clusters and a graph,
-produces a Tikz picture that visualizes the graph as a
-circle of clusters, each of which is a circle of the cluster's
-vertices.
-
-USER: copy, math
-'''
-    result = '''\documentclass{article}
-\usepackage{color}
-\usepackage[usenames,dvipsnames]{xcolor}
-\usepackage{tikz}
-
-\usepackage[active,pdftex,tightpage]{preview}
-\PreviewEnvironment{tikzpicture}
-\setlength\PreviewBorder{5pt}
-
-\\begin{document}
-\\newcommand{\circlediam}{2cm}
-\\begin{tikzpicture}[thick]
-\\tikzstyle{every node}=[circle,draw=black,fill=red] {};
-
-'''
-    centerStep = 360 / float(len(clusters))
-    
-    circleDiameter = '2cm'
-    
-    clusterindex = 0
-    
-    for i, cluster in enumerate(clusters):
-        center = (math.cos(math.radians(centerStep * i)) * 4,
-                  math.sin(math.radians(centerStep * i)) * 4)
-        
-        result += '\\begin{scope}' + '[xshift={0:.2f}cm, yshift={1:.2f}cm]'.format(center[0],center[1])
-        
-        size = float(len(cluster))
-        step = 360 / size
-        
-        for j, vert in enumerate(cluster):
-            result += '\t\\node ({0}) at ({1}:{2}) {3};\n'.format(vert,step * j,circleDiameter, '{}')
-        
-        result += '\\end{scope}'
-        
-    tmpgraph = copy.deepcopy(graph)
-    vertlist = list(graph['vertexes'])
-    
-    for i in xrange(0,len(vertlist)):
-        for j in tmpgraph['edges'][vertlist[i]]:
-            tmpgraph['edges'][j].remove(vertlist[i])
-            result += '\n\\draw ({0}) -- ({1});'.format(vertlist[i],
-               j)
-
-    result += '\n\n\\end{tikzpicture}\n\\end{document}'
-        
-    return result   
- 
-#-----------------------------------------------------------
-
-def toLatex(graph):
-'''This method, when given a graph, prints the contents of
-a Tikz image that shows the graph with the vertices in a
-circle.
-
-USES: copy, math
-'''
-    vertlist = list(graph['vertexes'])
-    tmpgraph = copy.deepcopy(graph)
-    size = len(vertlist)
-    circleDiameter = '4cm'
-    step = 360 / size;
-    result = '''\documentclass{article}
-\usepackage{tikz}
-
-\usepackage[active,pdftex,tightpage]{preview}
-\PreviewEnvironment{tikzpicture}
-\setlength\PreviewBorder{5pt}
-
-\\begin{document}
-\\newcommand{\circlediam}{2cm}
-\\begin{tikzpicture}[thick]
-\\tikzstyle{commonnode}=[circle,draw=black,fill=red] {};
-
-'''
-    for i in xrange(0,size):
-        result += '\\node ({0}) at ({1}:{2}) [commonnode] {3};\n'.format(i,step * i,circleDiameter, '{}')
-        
-    for i in xrange(0,size):
-        for j in tmpgraph['edges'][vertlist[i]]:
-            tmpgraph['edges'][j].remove(vertlist[i])
-            result += '\n\\draw ({0}) -- ({1});'.format(i,
-               vertlist.index(j))
-            
-    result += '\n\n\\end{tikzpicture}\n\\end{document}'
-    print result
+	ASSUMES THE GRAPH IS UNDIRECTED
+	'''
+	
+	explored = set()
+	clusters = list()
+	
+	#Outer cluster loop
+	for vertex in graph.vertices:
+		
+		if vertex in explored:
+			continue
+			
+		queue = deque()
+		queue.append(vertex)
+		
+		cluster = set()
+		cluster.add(vertex)
+		
+		#Find all the vertexes in the cluster
+		while len(queue) > 0:
+			tmp_vertex = queue.popleft()
+			for edge_vertex in graph.edge_map[tmp_vertex]:
+				if edge_vertex not in explored:
+					explored.add(edge_vertex)
+					queue.append(edge_vertex)
+					cluster.add(edge_vertex)
+		
+		clusters.append(cluster)
+	
+	return clusters
