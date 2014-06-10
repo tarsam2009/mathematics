@@ -17,6 +17,11 @@ The data structure of 'graph' used in this file is as follows:
       the graph.
 '''
 
+from collections import namedtuple
+
+Edge = namedtuple('Edge', ['from', 'to'])
+
+
 import copy
 from collections import deque
 import string
