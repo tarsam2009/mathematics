@@ -2,8 +2,10 @@ class Partition:
 	'''This is a partition'''
 
 	def __init__( self, previous=None ):
+		'''Create a partition from an iterable which is decreasing'''
 		self.parts = []
 
+		#Remove zeros
 		if previous:
 			self.parts = list( previous )
 			if len( self.parts ) > 0:
@@ -12,6 +14,26 @@ class Partition:
 					if self.parts[i] < self.parts[i+1]:
 						raise ArithmeticError( 'Partition must be weakly decreasing' )
 
+		#Trim any zeros
+		while self.parts and self.parts[-1] == 0:
+			self.parts.pop()
+	
+	@staticmethod
+	def affine_to_core( reduced_word = None, n = 1 ):
+		'''Create a n-core generated from the reduced word for an affine grassmannian element'''
+		if not reduced_word: reduced_word = []
+
+		p = Partition()
+		while reduced_word:
+			p = p.core_affine_action( reduced_word.pop(), n )
+
+		return p
+	
+	@staticmethod
+	def affine_to_bounded( reduced_word = None, n = 1 ):
+		'''Created a bounded partition in bijection with the reduced word'''
+		return Partition.affine_to_core( reduced_word, n ).core_to_bounded(n)
+	
 	def bounded_to_core( self, n ):
 		p = Partition( self )
 		
@@ -31,6 +53,42 @@ class Partition:
 
 		#For each row, check if any hook lengths too big (n+1)
 		return p
+	
+	def core_affine_action( self, element, n ):
+		#Go through the addable blocks
+		removable = []
+		addable = []
+		for i in range(len(self)):
+			new_parts = list(self)
+			try:
+				new_parts[i] = self[i]+1
+				Partition(new_parts)
+				addable.append( i )
+			except ArithmeticError:
+				pass
+
+			new_parts = list(self)
+			try:
+				new_parts[i] = self[i]-1
+				Partition(new_parts)
+				removable.append( i )
+			except ArithmeticError:
+				pass
+
+		addable = filter( lambda x : PartitionCell(x+1,self.parts[x]+1).content( n ) == element, addable)
+		if (-1 * len(self)) % n == element:
+			addable.append( len(self) )
+		removable = filter( lambda x : PartitionCell(x+1,self.parts[x]).content( n ) == element, removable )
+
+		new_parts = list(self)
+		new_parts.append(0)
+
+		for r in addable:
+			new_parts[r] = new_parts[r] + 1
+		for r in removable:
+			new_parts[r] = new_parts[r] - 1
+			
+		return Partition(new_parts)
 	
 	def core_to_bounded( self, n ):
 		p = Partition( self )
@@ -148,3 +206,6 @@ class PartitionCell:
 	def content( self, modulus ):
 		row, col = self.coord
 		return (col - row) % modulus
+
+#def affine_to_hikita( reduced_word = [], n = 1 ):
+	
