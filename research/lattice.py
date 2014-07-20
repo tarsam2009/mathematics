@@ -21,17 +21,44 @@ def lattice_to_hikita( point ):
 
 	m = -min_val-1
 	
-	print 'm,k=',m,actual_k
+	#print 'm,k=',m,actual_k
 
 	#Remove the k-th component
 	point.pop(functional_k)
+	
+	#print point
 
 	#Add m to everything
 	incremented = map( lambda x: x+m, point )
-
+	
+	#print incremented
 	#Wrap the tuple around and increment the second part
-	result = incremented[functional_k:] + map( lambda x: x+1, incremented[:functional_k] )
+	result = incremented[functional_k:] + map( lambda x: x+1, incremented[:functional_k] ) 
 	return tuple(result)
+
+def hikita_action( point, action, n=3 ):
+	point = list(point)
+
+	if action >= n:
+		raise ArithmeticError( 'Action not bounded by n' )
+	
+	a = sum( point )
+	l = (action - a) % n
+	#print 'l', l
+
+	if l == 0:
+		i = point.pop(0)
+		point.append(i+1)
+	elif l < n-1:
+		point[l-1], point[l] = point[l], point[l-1]
+	else: #l == n-1
+		if point[-1] == 0:
+			pass #Do nothing
+		else:
+			i = point.pop(-1)
+			point.insert(0, i-1)
+	
+	return tuple(point)
 
 def hikita_to_lattice( point ):
 	point = list(point)
@@ -43,7 +70,7 @@ def hikita_to_lattice( point ):
 	n = len(point) + 1
 
 	if sum( point ) == 0:
-		return [0] * n
+		return tuple([0] * n)
 
 	#By def of k, so n = length + 1
 	m,actual_k = divmod( sum( point ), n )
@@ -53,7 +80,7 @@ def hikita_to_lattice( point ):
 		actual_k = n
 		m = m - 1
 
-	print 'm,k=',m, actual_k
+	#print 'm,k=',m, actual_k
 	functional_k = actual_k - 1
 
 	result = list(point)

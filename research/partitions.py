@@ -1,3 +1,22 @@
+def generate_partitions( number = 1, start = (1,) ):
+	p = list( start )
+	two_count = p.count(2)
+
+	for _ in range( number ):
+		yield Partition(p)
+		if two_count == 0:
+			if sum(p) % 2 == 1: #If odd, go to even
+				two_count = (sum(p) + 1) / 2
+				p = [2] * two_count
+			else:
+				two_count = sum(p) / 2
+				p = [2] * two_count
+				p.append(1)
+		else: #Otherwise, just increment
+			two_count = two_count - 1
+			p[two_count] = 1
+			p.append(1)
+
 class Partition:
 	'''This is a partition'''
 
