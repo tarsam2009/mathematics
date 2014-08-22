@@ -83,6 +83,13 @@ def hikita_action( point, action ):
 	
 	return tuple(point)
 
+def hikita_from_word( word, n=3 ):
+	start = tuple( [0] * (n-1) )
+	for i in reversed( word ):
+		start = hikita_action(start, i, n)
+	
+	return start
+
 def hikita_to_lattice( point ):
 	point = list(point)
 
