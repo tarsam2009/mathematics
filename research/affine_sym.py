@@ -1,4 +1,5 @@
 import math
+from mathematics.research.lattice import hikita_from_word
 
 def project( old_vector, projecting ):
 	return scale(projecting, dot(old_vector, projecting) / dot( projecting, projecting ))
@@ -54,7 +55,7 @@ class Alcove:
 		new_alcove.coords[element] = new_point
 		return new_alcove
 	
-	def apply_to_canvas(self, canvas, coords, fill=True):
+	def apply_to_canvas(self, canvas, coords):
 		if self.triangle:
 			self.clean(canvas)
 		coords[1] = coords[1]*-1
@@ -63,22 +64,36 @@ class Alcove:
 		scalar = coords[2] - coords[0]
 		offset = coords[:2]
 
-		if fill:
-			fill='white'
-		else:
-			fill=''
-		
+		center = self.coords[0]
+
+		#Make the hexagon
+		hexagon = []
+		for vec in [(-1/math.sqrt(3),1), (1/math.sqrt(3),1), (1.1547,0), (1/math.sqrt(3),-1), (-1/math.sqrt(3),-1), (-1.1547,0) ]:
+			hexagon.append( add(center,vec) )
+
 		#First, we need to scale and translate
-		coords = map( lambda x: add(scale(x, scalar), offset), self.coords )
+		tri_coords = map( lambda x: add(scale(x, scalar), offset), self.coords )
+		hexagon = map( lambda x: add(scale(x, scalar), offset), hexagon)
+
 
 		#Next, we need to flip the y values
-		coords = map( lambda x: (x[0],x[1]*-1), coords )
+		tri_coords = map( lambda x: (x[0],x[1]*-1), tri_coords )
+		hexagon = map( lambda x: (x[0],x[1]*-1), hexagon )
 
-		self.triangle = canvas.create_polygon(coords, 
-			fill=fill,
+		#Then make some shapes
+		self.triangle = canvas.create_polygon(tri_coords, 
 			outline='black')
+
+		self.hex = canvas.create_polygon(hexagon, fill='', outline='black')
+
+		for i in range(3):
+			canvas.create_line( [ hexagon[i], hexagon[(i+3)%6] ] )
+
 		radius = 0.15 * scalar
-		bbox = sub( coords[0], (radius,radius) ) + add( coords[0], (radius,radius) )
+
+		center = tri_coords[0]
+
+		bbox = sub( center, (radius,radius) ) + add( center, (radius,radius) )
 		self.circle = canvas.create_oval(bbox, fill='black')
 	
 	def clean(self, canvas):
