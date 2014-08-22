@@ -8,6 +8,11 @@ assume that the graph is provided from this class, which guarantess the
 proper addition and removal of elements to and from the graph.
 '''
 
+from collections import namedtuple
+
+Edge = namedtuple('Edge', ['from', 'to'])
+
+
 import copy
 from collections import deque
 import string

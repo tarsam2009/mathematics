@@ -7,6 +7,8 @@ The mathematics package contains many useful packages I built to help in my own 
 * graph
 * coverings
 * combinatorics
+* matrix
+* Research
 
 ## Graphs
 
@@ -19,3 +21,9 @@ In tribute to Erdos, there is a coverings package, which helps organize a coveri
 ## Combinatorics
 
 Provides helper functions for many combinatorial tasks such as combinations and transforming an integer polynomial into a polynomial with binomial coefficients.
+* matrix
+* Research
+
+## Research
+
+Stuff with Hikita
