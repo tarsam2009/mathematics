@@ -36,8 +36,31 @@ def lattice_to_hikita( point ):
 	result = incremented[functional_k:] + map( lambda x: x+1, incremented[:functional_k] ) 
 	return tuple(result)
 
-def hikita_action( point, action, n=3 ):
+def solve_hikita( point ):
+	#Give the correct word for this point
+	word = []
+	n = len(point) + 1
+	i=0
+	while any( not x==0 for x in point ):
+		weight = sum(point)
+		l = -1
+		
+		if not point[-1] == 0:
+			l = n-1
+		else:
+			#Find the first where x isn't zero
+			index = next( pair[0] for pair in reversed(list(enumerate( point ))) if not pair[1] == 0 )
+			l = index+1
+
+		#Note, indices are +1 in Hikitas' paper
+		action = (weight+l)%n
+		point = hikita_action( point, (weight+l)%n )
+		word.append(action)
+	return word
+
+def hikita_action( point, action ):
 	point = list(point)
+	n = len(point)+1
 
 	if action >= n:
 		raise ArithmeticError( 'Action not bounded by n' )
